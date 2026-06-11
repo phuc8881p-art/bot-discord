@@ -24,7 +24,7 @@ async def handle_greetings(message):
         await message.channel.send(f"Xin chào {message.author.name}!")
     elif message.content.lower() == "hi":
         await message.channel.send(f"Chào {message.author.name}!")
-    elif message.content == "<@1514488819767054416>":
+    elif message.content == "<@1514521082772590753>":
         color = 0x1ABAFF
         embed = discord.Embed(color=color)
         embed.add_field(
