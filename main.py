@@ -101,11 +101,10 @@ async def help_command(ctx):
             "**COMMAND SUPPORT (Trang 1/2):**\n"
             "------------------------------------------------\n"
             "=> __***Lệnh cho Member & Admin:***__\n\n"
-            ":one: `!t` `meme_meo`\n * **random meme mèo**\n"
-            ":two: `!t` `ping`\n - **kiểm tra độ trễ giữa máy chủ Discord và máy tính**\n"
-            ":three: `!t` `random 'member' 'phần thưởng'`\n * **member: Thành viên muốn random**\n - **phần thưởng: Món quà muốn tặng (ko cần cũng được)**\n"
-            ":four: `!t` `translate 'ngôn ngữ đầu vào' 'ngôn ngữ đầu ra' 'văn bản`'\n * **ngôn ngữ đầu vào: Ngôn ngữ chính**\n - **ngôn ngữ đầu ra: Ngôn ngữ cần dịch**\n - **văn bản: Văn bản muốn dịch**\n"
-            ":five: `!t` `languages`\n * **hỗ trợ ngôn ngữ cho lệnh traslate**\n"
+            ":one: `!t` `ping`\n - **kiểm tra độ trễ giữa máy chủ Discord và máy tính**\n"
+            ":two: `!t` `random 'member' 'phần thưởng'`\n * **member: Thành viên muốn random**\n - **phần thưởng: Món quà muốn tặng (ko cần cũng được)**\n"
+            ":three: `!t` `translate 'ngôn ngữ đầu vào' 'ngôn ngữ đầu ra' 'văn bản`'\n * **ngôn ngữ đầu vào: Ngôn ngữ chính**\n - **ngôn ngữ đầu ra: Ngôn ngữ cần dịch**\n - **văn bản: Văn bản muốn dịch**\n"
+            ":four: `!t` `languages`\n * **hỗ trợ ngôn ngữ cho lệnh traslate**\n"
         ),
         (
             "**COMMAND SUPPORT (Trang 2/2):**\n"
