@@ -22,14 +22,14 @@ YOUR_USER_ID = (1195361246195757118, 1335606447144173610)
 
 async def handle_greetings(message):
     if message.content.lower() == "hello":
-        await message.channel.send(f"Xin chào {message.author.name}!")
+        await message.channel.send(f"Xin chào {message.author.mention}!")
     elif message.content.lower() == "hi":
-        await message.channel.send(f"Chào {message.author.name}!")
+        await message.channel.send(f"Chào {message.author.mention}!")
     elif message.content == "<@1514521082772590753>":
         color = 0x1ABAFF
         embed = discord.Embed(color=color)
         embed.add_field(
-            name=":wave: **Xin chào {}**".format(message.author.name),
+            name=":wave: **Xin chào {}**".format(message.author.mention),
             value="🤖 **Tôi là Bot Discord của bạn và sẵn sàng để phục vụ!**\n🔖 **Prefix của tôi là `!t`**\nℹ️ **Để khám phá các tính năng và lệnh của tôi, hãy sử dụng `{}help`** 💡".format(
                 prefix
             ),
