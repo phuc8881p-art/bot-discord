@@ -49,6 +49,35 @@ async def on_command_error(ctx, error):
     else:
         print(f"⚠️ | Lỗi không xác định: {error}")
 
+@bot.command(name="help")
+async def help_command(ctx):
+    pages = [
+        (
+            "**COMMAND SUPPORT (Trang 1/2):**\n"
+            "------------------------------------------------\n"
+            "=> __***Lệnh cho Member & Admin:***__\n\n"
+            ":one:* `>meme_meo`\n * **random meme mèo**\n"
+            ":two:* `>ping`\n - **kiểm tra độ trễ giữa máy chủ Discord và máy tính**\n"
+            ":three:* `>random 'member' 'phần thưởng'`\n * **member: Thành viên muốn random**\n - **phần thưởng: Món quà muốn tặng (ko cần cũng được)**\n"
+            ":four:* `>translate 'ngôn ngữ đầu vào' 'ngôn ngữ đầu ra' 'văn bản`'\n * **ngôn ngữ đầu vào: Ngôn ngữ chính**\n - **ngôn ngữ đầu ra: Ngôn ngữ cần dịch**\n - **văn bản: Văn bản muốn dịch**\n"
+            ":five:* `>languages`\n * **hỗ trợ ngôn ngữ cho lệnh traslate**\n"
+        ),
+        (
+            "**COMMAND SUPPORT (Trang 2/2):**\n"
+            "=> __***Lệnh dành cho `Administrator`:***__\n"
+            ":one:* `>userinfo 'member'`\n * **member: Thành viên muốn xem thông tin**\n    **(nếu ko có thành viên muốn xem thông thì thông tin sẽ là người dùng lệnh)**\n"
+            ":two:* `>kick 'member' 'reason'`\n * **member: Tên thành viên muốn kick**\n - **reason: Lý do kick**\n"
+            ":three:* `>ban 'member' 'reason'`\n * **member: Tên thành viên muốn ban**\n - **reason: Lý do ban**\n"
+            ":four:* `>unban 'member' 'reason'`\n * **member: Tên thành viên muốn unban**\n - **reason: Lý do unban**\n"
+            ":five:* `>add_role 'member' 'role'`\n * **member: Tên thành viên muốn app role**\n - **role: Role muốn thêm**\n"
+            ":six:* `>remove_role 'member' 'role'`\n * **member: Tên thành viên muốn remove role**\n - **role: Role muốn xóa**"
+        )
+    ]
+
+    view = HelpPaginator(pages)
+    embed = discord.Embed(description=pages[0], color=0x808080)
+    view.message = await ctx.send(embed=embed, view=view)
+    
 @bot.command()
 async def ping(ctx):
     latency = round(bot.latency * 1000)
@@ -165,7 +194,7 @@ async def ban(ctx, member: discord.Member = None, *, reason="Không có lý do")
     except Exception as e:
         await ctx.send(f"**⚠️ | Đã xảy ra lỗi:** `{e}`")
 
-  @bot.command()
+@bot.command()
 async def unban(ctx, user_id: int = None):
     if ctx.author.id != YOUR_USER_ID and not ctx.author.guild_permissions.ban_members:
         await ctx.send("**❌ | Bạn không có quyền sử dụng lệnh này!**")
@@ -260,35 +289,6 @@ class HelpPaginator(discord.ui.View):
         self.current_page = (self.current_page + 1) % len(self.pages)
         await self.update_message(interaction)
 
-  @bot.command(name="help")
-async def help_command(ctx):
-    pages = [
-        (
-            "**COMMAND SUPPORT (Trang 1/2):**\n"
-            "------------------------------------------------\n"
-            "=> __***Lệnh cho Member & Admin:***__\n\n"
-            ":one:* `>meme_meo`\n * **random meme mèo**\n"
-            ":two:* `>ping`\n - **kiểm tra độ trễ giữa máy chủ Discord và máy tính**\n"
-            ":three:* `>random 'member' 'phần thưởng'`\n * **member: Thành viên muốn random**\n - **phần thưởng: Món quà muốn tặng (ko cần cũng được)**\n"
-            ":four:* `>translate 'ngôn ngữ đầu vào' 'ngôn ngữ đầu ra' 'văn bản`'\n * **ngôn ngữ đầu vào: Ngôn ngữ chính**\n - **ngôn ngữ đầu ra: Ngôn ngữ cần dịch**\n - **văn bản: Văn bản muốn dịch**\n"
-            ":five:* `>languages`\n * **hỗ trợ ngôn ngữ cho lệnh traslate**\n"
-        ),
-        (
-            "**COMMAND SUPPORT (Trang 2/2):**\n"
-            "=> __***Lệnh dành cho `Administrator`:***__\n"
-            ":one:* `>userinfo 'member'`\n * **member: Thành viên muốn xem thông tin**\n    **(nếu ko có thành viên muốn xem thông thì thông tin sẽ là người dùng lệnh)**\n"
-            ":two:* `>kick 'member' 'reason'`\n * **member: Tên thành viên muốn kick**\n - **reason: Lý do kick**\n"
-            ":three:* `>ban 'member' 'reason'`\n * **member: Tên thành viên muốn ban**\n - **reason: Lý do ban**\n"
-            ":four:* `>unban 'member' 'reason'`\n * **member: Tên thành viên muốn unban**\n - **reason: Lý do unban**\n"
-            ":five:* `>add_role 'member' 'role'`\n * **member: Tên thành viên muốn app role**\n - **role: Role muốn thêm**\n"
-            ":six:* `>remove_role 'member' 'role'`\n * **member: Tên thành viên muốn remove role**\n - **role: Role muốn xóa**"
-        )
-    ]
-
-    view = HelpPaginator(pages)
-    embed = discord.Embed(description=pages[0], color=0x808080)
-    view.message = await ctx.send(embed=embed, view=view)
-
 @bot.command()
 async def fake(ctx, user: discord.Member, *, message: str):
     try:
@@ -322,9 +322,9 @@ async def fake_error(ctx, error):
     elif isinstance(error, discord.Forbidden):
         await ctx.send("**Bot không có quyền thực hiện hành động này!**")
     else:
-        await ctx.send(f"Đã xảy ra lỗi: {str(error)
+        await ctx.send(f"Đã xảy ra lỗi: {str(error)}")
 
-  @bot.command()
+@bot.command()
 async def clear(ctx, amount: int = None):
     if (
         ctx.author.id != YOUR_USER_ID
