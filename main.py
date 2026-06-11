@@ -1,4 +1,7 @@
+import os
+import random as rand
 import discord
+from deep_translator import GoogleTranslator
 from discord.ext import commands
 from dotenv import load_dotenv
 
