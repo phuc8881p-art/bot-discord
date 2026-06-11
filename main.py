@@ -30,7 +30,7 @@ async def handle_greetings(message):
         
         embed = discord.Embed(
             description=(
-                f"👋 **Xin chào {message.author.mention}**\n\n"
+                f"👋 **Xin chào {message.author.mention}**\n"
                 f"🤖 **Tôi là Bot Discord của bạn và sẵn sàng để phục vụ!**\n"
                 f"🔖 **Prefix của tôi là `{prefix}`**\n"
                 f"ℹ️ **Để khám phá các tính năng và lệnh của tôi, hãy sử dụng `{prefix}help`** 💡"
