@@ -25,14 +25,17 @@ async def handle_greetings(message):
         await message.channel.send(f"Xin chào {message.author.mention}!")
     elif message.content.lower() == "hi":
         await message.channel.send(f"Chào {message.author.mention}!")
-    elif message.content == "<@1514521082772590753>":
+    elif message.content == f"<@{bot.user.id}>" or message.content == "<@1514521082772590753>":
         color = 0x1ABAFF
-        embed = discord.Embed(color=color)
-        embed.add_field(
-            name=":wave: **Xin chào {}**".format(message.author.mention),
-            value="🤖 **Tôi là Bot Discord của bạn và sẵn sàng để phục vụ!**\n🔖 **Prefix của tôi là `!t`**\nℹ️ **Để khám phá các tính năng và lệnh của tôi, hãy sử dụng `{}help`** 💡".format(
-                prefix
+        
+        embed = discord.Embed(
+            description=(
+                f"👋 **Xin chào {message.author.mention}**\n\n"
+                f"🤖 **Tôi là Bot Discord của bạn và sẵn sàng để phục vụ!**\n"
+                f"🔖 **Prefix của tôi là `{prefix}`**\n"
+                f"ℹ️ **Để khám phá các tính năng và lệnh của tôi, hãy sử dụng `{prefix}help`** 💡"
             ),
+            color=color
         )
         await message.channel.send(embed=embed)
 
