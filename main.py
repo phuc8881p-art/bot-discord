@@ -101,21 +101,21 @@ async def help_command(ctx):
             "**COMMAND SUPPORT (Trang 1/2):**\n"
             "------------------------------------------------\n"
             "=> __***Lệnh cho Member & Admin:***__\n\n"
-            ":one:* `!t` `meme_meo`\n * **random meme mèo**\n"
-            ":two:* `!t` `ping`\n - **kiểm tra độ trễ giữa máy chủ Discord và máy tính**\n"
-            ":three:* `!t` `random 'member' 'phần thưởng'`\n * **member: Thành viên muốn random**\n - **phần thưởng: Món quà muốn tặng (ko cần cũng được)**\n"
-            ":four:* `!t` `translate 'ngôn ngữ đầu vào' 'ngôn ngữ đầu ra' 'văn bản`'\n * **ngôn ngữ đầu vào: Ngôn ngữ chính**\n - **ngôn ngữ đầu ra: Ngôn ngữ cần dịch**\n - **văn bản: Văn bản muốn dịch**\n"
-            ":five:* `!t` `languages`\n * **hỗ trợ ngôn ngữ cho lệnh traslate**\n"
+            ":one: `!t` `meme_meo`\n * **random meme mèo**\n"
+            ":two: `!t` `ping`\n - **kiểm tra độ trễ giữa máy chủ Discord và máy tính**\n"
+            ":three: `!t` `random 'member' 'phần thưởng'`\n * **member: Thành viên muốn random**\n - **phần thưởng: Món quà muốn tặng (ko cần cũng được)**\n"
+            ":four: `!t` `translate 'ngôn ngữ đầu vào' 'ngôn ngữ đầu ra' 'văn bản`'\n * **ngôn ngữ đầu vào: Ngôn ngữ chính**\n - **ngôn ngữ đầu ra: Ngôn ngữ cần dịch**\n - **văn bản: Văn bản muốn dịch**\n"
+            ":five: `!t` `languages`\n * **hỗ trợ ngôn ngữ cho lệnh traslate**\n"
         ),
         (
             "**COMMAND SUPPORT (Trang 2/2):**\n"
             "=> __***Lệnh dành cho `Administrator`:***__\n"
-            ":one:* `!t` `userinfo 'member'`\n * **member: Thành viên muốn xem thông tin**\n    **(nếu ko có thành viên muốn xem thông thì thông tin sẽ là người dùng lệnh)**\n"
-            ":two:* `!t` `kick 'member' 'reason'`\n * **member: Tên thành viên muốn kick**\n - **reason: Lý do kick**\n"
-            ":three:* `!t` `ban 'member' 'reason'`\n * **member: Tên thành viên muốn ban**\n - **reason: Lý do ban**\n"
-            ":four:* `!t` `unban 'member' 'reason'`\n * **member: Tên thành viên muốn unban**\n - **reason: Lý do unban**\n"
-            ":five:* `!t` `add_role 'member' 'role'`\n * **member: Tên thành viên muốn app role**\n - **role: Role muốn thêm**\n"
-            ":six:* `!t` `remove_role 'member' 'role'`\n * **member: Tên thành viên muốn remove role**\n - **role: Role muốn xóa**"
+            ":one: `!t` `userinfo 'member'`\n * **member: Thành viên muốn xem thông tin**\n    **(nếu ko có thành viên muốn xem thông thì thông tin sẽ là người dùng lệnh)**\n"
+            ":two: `!t` `kick 'member' 'reason'`\n * **member: Tên thành viên muốn kick**\n - **reason: Lý do kick**\n"
+            ":three: `!t` `ban 'member' 'reason'`\n * **member: Tên thành viên muốn ban**\n - **reason: Lý do ban**\n"
+            ":four: `!t` `unban 'member' 'reason'`\n * **member: Tên thành viên muốn unban**\n - **reason: Lý do unban**\n"
+            ":five: `!t` `add_role 'member' 'role'`\n * **member: Tên thành viên muốn app role**\n - **role: Role muốn thêm**\n"
+            ":six: `!t` `remove_role 'member' 'role'`\n * **member: Tên thành viên muốn remove role**\n - **role: Role muốn xóa**"
         ),
     ]
 
