@@ -36,6 +36,14 @@ async def handle_greetings(message):
         )
         await message.channel.send(embed=embed)
 
+@bot.event
+async def on_message(message):
+    if message.author == bot.user:
+        return
+
+    await handle_greetings(message)
+
+    await bot.process_commands(message)
 
 @bot.event
 async def on_command_error(ctx, error):
