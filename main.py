@@ -285,7 +285,7 @@ async def on_message(message):
         user_messages[user_id] = [] 
 
         if spam_warn_count == 1:
-            await message.channel.send(f"{message.author.mention} ⚠ Cảnh báo: Vui lòng dừng hành vi spam tin nhắn! (Tin nhắn cũ đã bị xóa)")
+            await message.channel.send(f"{message.author.mention} ⚠ Cảnh báo: Vui lòng dừng hành vi spam tin nhắn!")
         elif spam_warn_count == 2:
             try:
                 await message.author.timeout(timedelta(minutes=10), reason="Spam tin nhắn lần 2")
