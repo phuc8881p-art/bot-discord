@@ -25,9 +25,7 @@ LOG_CHANNEL_ID = 1505527971883126844
 ALLOWED_GUILD_ID = 1505460695410671797
 
 warnings = {}
-user_messages = (
-    {}
-)
+user_messages = {}
 
 SPAM_MSG_LIMIT = 5
 SPAM_TIME_WINDOW = 3
@@ -213,7 +211,7 @@ async def on_message(message):
     ]
 
     # Xử lý khi dính ngưỡng Spam
-    if len(user_messages[user_id]) > SPAM_MSG_LIMIT:
+    if len(user_messages[user_id]) >= SPAM_MSG_LIMIT:
         try:
             await message.delete()
         except discord.Forbidden:
@@ -221,8 +219,8 @@ async def on_message(message):
         except discord.NotFound:
             pass
 
-        # Chỉ phạt khi user vừa chạm mốc vi phạm để tránh bot tự spam log
-        if len(user_messages[user_id]) == SPAM_MSG_LIMIT + 1:
+        # ✅ SỬA THÀNH: Chỉ phạt đúng 1 lần duy nhất ngay tại câu dính ngưỡng spam
+        if len(user_messages[user_id]) == SPAM_MSG_LIMIT:
             warnings[user_id] = warnings.get(user_id, 0) + 1
             warn_count = warnings[user_id]
 
