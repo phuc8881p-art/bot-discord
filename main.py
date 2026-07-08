@@ -24,11 +24,13 @@ YOUR_USER_ID = (1195361246195757118, 1335606447144173610)
 LOG_CHANNEL_ID = 1505527971883126844
 ALLOWED_GUILD_ID = 1505460695410671797
 
-from datetime import timedelta
-import discord
-import re
-
 warnings = {}
+user_messages = (
+    {}
+)
+
+SPAM_MSG_LIMIT = 5
+SPAM_TIME_WINDOW = 3
 
 async def handle_greetings(message):
     if message.content.lower() == "hello":
@@ -177,7 +179,7 @@ async def on_message(message):
         await bot.process_commands(message)
         return
 
-    # 3. Bỏ qua Admin/Mod/Staff (Không lọc từ cấm)
+    # 3. Bỏ qua Admin/Mod/Staff (Không lọc từ cấm & không check spam)
     perms = message.author.guild_permissions
     ignore_roles = {"Staff", "Admin", "Mod"}
     has_ignore_role = any(role.name in ignore_roles for role in message.author.roles)
@@ -192,20 +194,26 @@ async def on_message(message):
         await bot.process_commands(message)
         return
 
-    # 4. KIỂM TRA TỪ CẤM (Dành cho thành viên thường)
-    msg = message.content.lower()
-    is_bad = False
+    # ==========================================
+    # 4. BỘ LỌC 1: KIỂM TRA SPAM TIN NHẮN (Ưu tiên check trước)
+    # ==========================================
+    user_id = message.author.id
+    current_time = datetime.now()
 
-    for word in bad_words:
-        # Regex tối ưu cho tiếng Việt (nhận diện khoảng trắng và dấu câu xung quanh)
-        pattern = rf"(?:^|\s|[.,!?;*~])" + re.escape(word) + rf"(?:$|\s|[.,!?;*~])"
-        if re.search(pattern, msg):
-            is_bad = True
-            break
+    if user_id not in user_messages:
+        user_messages[user_id] = []
 
-    # 5. XỬ LÝ KHI VI PHẠM TỪ CẤM
-    if is_bad:
-        # Xóa tin nhắn vi phạm
+    user_messages[user_id].append(current_time)
+
+    # Lọc bỏ mốc thời gian cũ quá 3 giây
+    user_messages[user_id] = [
+        msg_time
+        for msg_time in user_messages[user_id]
+        if current_time - msg_time < timedelta(seconds=SPAM_TIME_WINDOW)
+    ]
+
+    # Xử lý khi dính ngưỡng Spam
+    if len(user_messages[user_id]) > SPAM_MSG_LIMIT:
         try:
             await message.delete()
         except discord.Forbidden:
@@ -213,12 +221,90 @@ async def on_message(message):
         except discord.NotFound:
             pass
 
-        # Cộng dồn cảnh báo (Đã có biến warnings chống lỗi crash)
-        user_id = message.author.id
+        # Chỉ phạt khi user vừa chạm mốc vi phạm để tránh bot tự spam log
+        if len(user_messages[user_id]) == SPAM_MSG_LIMIT + 1:
+            warnings[user_id] = warnings.get(user_id, 0) + 1
+            warn_count = warnings[user_id]
+
+            log_channel = bot.get_channel(LOG_CHANNEL_ID)
+            if log_channel:
+                embed = discord.Embed(
+                    title="🚫 Vi phạm: Spam tin nhắn", color=discord.Color.orange()
+                )
+                embed.add_field(
+                    name="👤 Người dùng",
+                    value=f"{message.author.mention} (`{message.author.id}`)",
+                    inline=False,
+                )
+                embed.add_field(
+                    name="💬 Nội dung tin nhắn spam",
+                    value=message.content,
+                    inline=False,
+                )
+                embed.add_field(
+                    name="⚠ Tổng số lần vi phạm",
+                    value=f"**{warn_count}**",
+                    inline=False,
+                )
+                embed.add_field(
+                    name="📍 Kênh", value=message.channel.mention, inline=False
+                )
+                await log_channel.send(embed=embed)
+
+            # Hình phạt spam
+            if warn_count == 1:
+                warning = await message.channel.send(
+                    f"{message.author.mention} ⚠ Cảnh báo: Vui lòng dừng hành vi spam tin nhắn!"
+                )
+                try:
+                    await warning.delete(delay=5)
+                except:
+                    pass
+            elif warn_count == 2:
+                try:
+                    await message.author.timeout(
+                        timedelta(minutes=10), reason="Spam tin nhắn lần 2"
+                    )
+                    await message.channel.send(
+                        f"{message.author.mention} ⏳ Bạn đã bị Timeout **10 phút** vì cố tình spam!"
+                    )
+                except Exception as e:
+                    print(f"❌ Lỗi timeout spam: {e}")
+            elif warn_count >= 3:
+                try:
+                    await message.author.kick(reason="Spam tin nhắn quá 3 lần")
+                    await message.channel.send(
+                        f"👢 **{message.author}** đã bị Kick khỏi server vì cố tình spam nhiều lần!"
+                    )
+                except Exception as e:
+                    print(f"❌ Lỗi kick spam: {e}")
+
+        return  # Ngắt tại đây, không cho tin nhắn spam chạy xuống phần dưới
+
+    # ==========================================
+    # 5. BỘ LỌC 2: KIỂM TRA TỪ CẤM (Nếu không spam thì mới check từ)
+    # ==========================================
+    msg = message.content.lower()
+    is_bad = False
+
+    for word in bad_words:
+        pattern = rf"(?:^|\s|[.,!?;*~])" + re.escape(word) + rf"(?:$|\s|[.,!?;*~])"
+        if re.search(pattern, msg):
+            is_bad = True
+            break
+
+    # Xử lý khi dính từ cấm
+    if is_bad:
+        try:
+            await message.delete()
+        except discord.Forbidden:
+            print("❌ Bot thiếu quyền xóa tin nhắn (Manage Messages)!")
+        except discord.NotFound:
+            pass
+
         warnings[user_id] = warnings.get(user_id, 0) + 1
         warn_count = warnings[user_id]
 
-        # Gửi LOG vi phạm vào kênh quản lý
         log_channel = bot.get_channel(LOG_CHANNEL_ID)
         if log_channel:
             embed = discord.Embed(
@@ -240,7 +326,7 @@ async def on_message(message):
             )
             await log_channel.send(embed=embed)
 
-        # Thực thi hình phạt
+        # Hình phạt từ cấm
         if warn_count == 1:
             warning = await message.channel.send(
                 f"{message.author.mention} ⚠ Cảnh báo: Vui lòng không sử dụng từ ngữ thô tục!"
@@ -249,7 +335,6 @@ async def on_message(message):
                 await warning.delete(delay=5)
             except:
                 pass
-
         elif warn_count == 2:
             try:
                 await message.author.timeout(
@@ -258,25 +343,22 @@ async def on_message(message):
                 await message.channel.send(
                     f"{message.author.mention} ⏳ Bạn đã bị Timeout **10 phút** vì tiếp tục vi phạm!"
                 )
-            except discord.Forbidden:
-                print("❌ Bot thiếu quyền Moderate Members để timeout.")
             except Exception as e:
                 print(f"❌ Lỗi timeout: {e}")
-
         elif warn_count >= 3:
             try:
                 await message.author.kick(reason="Vi phạm từ cấm quá 3 lần")
                 await message.channel.send(
                     f"👢 **{message.author}** đã bị Kick khỏi server vì cố tình vi phạm nhiều lần!"
                 )
-            except discord.Forbidden:
-                print("❌ Bot thiếu quyền Kick Members để đá người dùng.")
             except Exception as e:
                 print(f"❌ Lỗi kick: {e}")
 
-        return  # Ngắt hoàn toàn tại đây, không cho tin nhắn bậy bạ kích hoạt lệnh/lời chào nữa.
+        return  # Ngắt tại đây nếu tin nhắn vi phạm từ cấm
 
-    # 6. NẾU TIN NHẮN HỢP LỆ -> Mới xử lý lời chào và lệnh
+    # ==========================================
+    # 6. TIN NHẮN HỢP LỆ -> Xử lý lệnh và chào hỏi bình thường
+    # ==========================================
     await handle_greetings(message)
     await bot.process_commands(message)
     
