@@ -193,7 +193,7 @@ async def on_message(message):
         return
 
     # ==========================================
-    # 4. BỘ LỌC 1: KIỂM TRA SPAM TIN NHẮN (Ưu tiên check trước)
+    # 4. BỘ LỌC 1: KIỂM TRA SPAM TIN NHẮN (XÓA TIN NHẮN)
     # ==========================================
     user_id = message.author.id
     current_time = datetime.now()
@@ -213,13 +213,12 @@ async def on_message(message):
     # Xử lý khi dính ngưỡng Spam
     if len(user_messages[user_id]) >= SPAM_MSG_LIMIT:
         try:
-            await message.delete()
+            await message.delete()  # ✅ Xóa tin nhắn khi người dùng spam
         except discord.Forbidden:
             print("❌ Bot thiếu quyền xóa tin nhắn (Manage Messages)!")
         except discord.NotFound:
             pass
 
-        # ✅ SỬA THÀNH: Chỉ phạt đúng 1 lần duy nhất ngay tại câu dính ngưỡng spam
         if len(user_messages[user_id]) == SPAM_MSG_LIMIT:
             warnings[user_id] = warnings.get(user_id, 0) + 1
             warn_count = warnings[user_id]
@@ -249,7 +248,7 @@ async def on_message(message):
                 )
                 await log_channel.send(embed=embed)
 
-            # Hình phạt spam
+            # Hình phạt spam (Tin nhắn cảnh báo spam vẫn tự xóa sau 5 giây để tránh rác kênh)
             if warn_count == 1:
                 warning = await message.channel.send(
                     f"{message.author.mention} ⚠ Cảnh báo: Vui lòng dừng hành vi spam tin nhắn!"
@@ -277,10 +276,10 @@ async def on_message(message):
                 except Exception as e:
                     print(f"❌ Lỗi kick spam: {e}")
 
-        return  # Ngắt tại đây, không cho tin nhắn spam chạy xuống phần dưới
+        return  # Ngắt tại đây nếu dính spam
 
     # ==========================================
-    # 5. BỘ LỌC 2: KIỂM TRA TỪ CẤM (Nếu không spam thì mới check từ)
+    # 5. BỘ LỌC 2: KIỂM TRA TỪ CẤM (XÓA TIN TỤC + GIỮ NGUYÊN CẢNH BÁO)
     # ==========================================
     msg = message.content.lower()
     is_bad = False
@@ -294,7 +293,7 @@ async def on_message(message):
     # Xử lý khi dính từ cấm
     if is_bad:
         try:
-            await message.delete()
+            await message.delete()  # ✅ ĐÃ THÊM LẠI: Xóa tin nhắn gõ tục ngay lập tức
         except discord.Forbidden:
             print("❌ Bot thiếu quyền xóa tin nhắn (Manage Messages)!")
         except discord.NotFound:
@@ -326,13 +325,10 @@ async def on_message(message):
 
         # Hình phạt từ cấm
         if warn_count == 1:
-            warning = await message.channel.send(
+            # ✅ GIỮ NGUYÊN: Chỉ gửi tin nhắn cảnh báo và ĐỂ LẠI VĨNH VIỄN (đã xóa block tự hủy sau 5s)
+            await message.channel.send(
                 f"{message.author.mention} ⚠ Cảnh báo: Vui lòng không sử dụng từ ngữ thô tục!"
             )
-            try:
-                await warning.delete(delay=5)
-            except:
-                pass
         elif warn_count == 2:
             try:
                 await message.author.timeout(
