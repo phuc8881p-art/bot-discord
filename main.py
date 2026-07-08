@@ -11,9 +11,17 @@ import asyncio
 load_dotenv()
 token = os.getenv("TOKEN")
 
+YOUR_USER_ID = (1195361246195757118, 1335606447144173610)
+LOG_CHANNEL_ID = 1505527971883126844
+ALLOWED_GUILD_ID = 1505460695410671797
+
 warnings = {}
 bad_word_warnings = {}
 user_messages = {}
+
+SPAM_MSG_LIMIT = 4
+SPAM_TIME_WINDOW = 3
+RESET_VIOLATION_HOURS = 1
 
 prefix = "!t"
 intents = discord.Intents.all()
@@ -23,14 +31,6 @@ intents.reactions = True
 bot = commands.Bot(command_prefix=prefix, intents=intents)
 
 bot.remove_command("help")
-
-YOUR_USER_ID = (1195361246195757118, 1335606447144173610)
-LOG_CHANNEL_ID = 1505527971883126844
-ALLOWED_GUILD_ID = 1505460695410671797
-
-SPAM_MSG_LIMIT = 4
-SPAM_TIME_WINDOW = 3
-RESET_VIOLATION_HOURS = 1
     
 @tasks.loop(minutes=1)
 async def auto_reset_warnings():
@@ -79,8 +79,16 @@ async def on_ready():
     print(f"🤖 Bot đã đăng nhập thành công: {bot.user}")
     print(f"🛡️ Hệ thống bảo mật và chống spam đã kích hoạt!")
     print(f"==========================================")
-    # Khởi động vòng lặp tự động quét dọn bộ đếm sau mỗi 1 giờ không tái phạm
-    auto_reset_warnings.start()
+    if not auto_reset_warnings.is_running():
+        auto_reset_warnings.start()
+
+@bot.event
+async def on_member_remove(member):
+    user_id = member.id
+    if user_id in spam_warnings: del spam_warnings[user_id]
+    if user_id in bad_word_warnings: del bad_word_warnings[user_id]
+    if user_id in user_messages: del user_messages[user_id]
+    print(f"🧹 Đã xóa dữ liệu của user: {member} do rời hoặc bị kick.")
     
 bad_words = [
     # Chửi phổ biến
@@ -392,21 +400,6 @@ async def on_message(message):
     # ==========================================
     await handle_greetings(message)
     await bot.process_commands(message)
-
-
-# ==========================================
-# SỰ KIỆN TỰ ĐỘNG RESET SẠCH SẼ KHI THÀNH VIÊN RỜI/BỊ KICK KHỎI SERVER
-# ==========================================
-@bot.event
-async def on_member_remove(member):
-    user_id = member.id
-    if user_id in spam_warnings: 
-        del spam_warnings[user_id]
-    if user_id in bad_word_warnings: 
-        del bad_word_warnings[user_id]
-    if user_id in user_messages: 
-        del user_messages[user_id]
-    print(f"🧹 Đã giải phóng toàn bộ dữ liệu lưu trữ của user: {member} ({user_id})")
     
 @bot.event
 async def on_command_error(ctx, error):
