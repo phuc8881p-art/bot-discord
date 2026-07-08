@@ -21,14 +21,28 @@ YOUR_USER_ID = (1195361246195757118, 1335606447144173610)
 LOG_CHANNEL_ID = 1505527971883126844
 ALLOWED_GUILD_ID = 1505460695410671797
 
+from datetime import timedelta
+import discord
+import re
+
+# Giả định các biến này đã được định nghĩa ở trên trong code của bạn
+# prefix = "!"
+# ALLOWED_GUILD_ID = 123456789
+# LOG_CHANNEL_ID = 123456789
+# warnings = {}
+
+
 async def handle_greetings(message):
     if message.content.lower() == "hello":
         await message.channel.send(f"Xin chào {message.author.mention}!")
     elif message.content.lower() == "hi":
         await message.channel.send(f"Chào {message.author.mention}!")
-    elif message.content == f"<@{bot.user.id}>" or message.content == "<@1514521082772590753>":
+    elif (
+        message.content == f"<@{bot.user.id}>"
+        or message.content == "<@1514521082772590753>"
+    ):
         color = 0x1ABAFF
-        
+
         embed = discord.Embed(
             description=(
                 f"👋 **Xin chào {message.author.mention}**\n"
@@ -36,28 +50,56 @@ async def handle_greetings(message):
                 f"🔖 **Prefix của tôi là `{prefix}`**\n"
                 f"ℹ️ **Để khám phá các tính năng và lệnh của tôi, hãy sử dụng `{prefix}help`** 💡"
             ),
-            color=color
+            color=color,
         )
         await message.channel.send(embed=embed)
 
+
 bad_words = [
-
     # Chửi phổ biến
-    "địt", "dit", "djt", "đjt",
-    "đụ", "du", "đụ má", "du ma",
-    "đéo", "deo", "đếch", "dech",
-    "dm", "dmm", "đm", "dmk", "dmn",
-    "vcl", "vl", "vkl", "vloz",
-    "vãi", "vai", "vãi l", "vailon",
-
+    "địt",
+    "dit",
+    "djt",
+    "đjt",
+    "đụ",
+    "du",
+    "đụ má",
+    "du ma",
+    "đéo",
+    "deo",
+    "đếch",
+    "dech",
+    "dm",
+    "dmm",
+    "đm",
+    "dmk",
+    "dmn",
+    "vcl",
+    "vl",
+    "vkl",
+    "vloz",
+    "vái",
+    "vai",
+    "vái l",
+    "vailon",
     # Bộ phận cơ thể
-    "cặc", "cak", "cac",
-    "cu", "chim", "buồi", "buoi",
-    "lồn", "lon", "cl", "cailon",
-    "dái", "zái",
-    "cứt", "cut",
-    "đái", "ỉa",
-
+    "cặc",
+    "cak",
+    "cac",
+    "cu",
+    "chim",
+    "buồi",
+    "buoi",
+    "lồn",
+    "lon",
+    "cl",
+    "cailon",
+    "dái",
+    "zái",
+    "cứt",
+    "cut",
+    "đái",
+    "ỉa",
     # Xúc phạm
     "ngu",
     "ngu lol",
@@ -78,7 +120,6 @@ bad_words = [
     "rác rưởi",
     "phế vật",
     "vô dụng",
-
     # Chửi gia đình
     "mẹ mày",
     "me may",
@@ -90,7 +131,6 @@ bad_words = [
     "tiên sư",
     "mả mẹ",
     "con mẹ mày",
-
     # Toxic game/chat
     "trash",
     "dog",
@@ -100,7 +140,6 @@ bad_words = [
     "óc",
     "brain dead",
     "retard",
-
     # Biến thể bypass
     "d!t",
     "d1t",
@@ -112,7 +151,6 @@ bad_words = [
     "l o n",
     "c a c",
     "d e o",
-
     # Tiếng Anh
     "fuck",
     "fck",
@@ -126,89 +164,126 @@ bad_words = [
     "pussy",
     "slut",
     "whore",
-
 ]
+
+
 @bot.event
 async def on_message(message):
-    # Bỏ qua bot và DM
+    # 1. Bỏ qua bot và tin nhắn nhắn tin riêng (DM)
     if message.author.bot or not message.guild:
         return
 
-    # Xử lý chào hỏi
-    await handle_greetings(message)
-
-    # Nếu khác server cho phép thì vẫn xử lý command
+    # 2. Kiểm tra nếu không thuộc Server được cho phép cấu hình kiểm tra từ cấm
     if message.guild.id != ALLOWED_GUILD_ID:
-        await bot.process_commands(message)
+        await handle_greetings(message)  # Vẫn hỗ trợ chào hỏi
+        await bot.process_commands(message)  # Xử lý lệnh bình thường
         return
 
-    # Bỏ qua admin/mod
+    # 3. Bỏ qua Admin/Mod/Staff (Không check từ cấm, không cần chặn lệnh)
     perms = message.author.guild_permissions
-    if perms.administrator or perms.manage_messages or perms.manage_guild:
-        await bot.process_commands(message)
-        return
-
     ignore_roles = {"Staff", "Admin", "Mod"}
-    if any(role.name in ignore_roles for role in message.author.roles):
+    has_ignore_role = any(role.name in ignore_roles for role in message.author.roles)
+
+    if (
+        perms.administrator
+        or perms.manage_messages
+        or perms.manage_guild
+        or has_ignore_role
+    ):
+        await handle_greetings(message)
         await bot.process_commands(message)
         return
 
+    # 4. CHECK BAD WORDS (Dành cho thành viên thường)
     msg = message.content.lower()
-
-    # CHECK BAD WORDS
     is_bad = False
 
     for word in bad_words:
-        pattern = r'\b' + re.escape(word) + r'\b'
+        # Giải pháp thay thế \b bằng cách check khoảng trắng hoặc ranh giới tự tạo để nhận diện tốt tiếng Việt
+        pattern = rf"(?:^|\s|[.,!?;*~])" + re.escape(word) + rf"(?:$|\s|[.,!?;*~])"
         if re.search(pattern, msg):
             is_bad = True
             break
 
     if is_bad:
+        # Xóa tin nhắn vi phạm
         try:
             await message.delete()
         except discord.Forbidden:
-            print("Bot thiếu quyền xóa tin nhắn!")
+            print("❌ Bot thiếu quyền xóa tin nhắn (Manage Messages)!")
         except discord.NotFound:
             pass
 
+        # Cộng dồn số lần vi phạm
         user_id = message.author.id
         warnings[user_id] = warnings.get(user_id, 0) + 1
         warn_count = warnings[user_id]
 
-        # Gửi LOG vào channel quản lý
+        # Gửi LOG vi phạm vào kênh quản lý
         log_channel = bot.get_channel(LOG_CHANNEL_ID)
         if log_channel:
-            embed = discord.Embed(title="🚫 Vi phạm từ cấm", color=discord.Color.red())
-            embed.add_field(name="👤 Người dùng", value=f"{message.author.mention} (`{message.author.id}`)", inline=False)
-            embed.add_field(name="💬 Tin nhắn gốc", value=message.content, inline=False)
-            embed.add_field(name="⚠ Số lần vi phạm", value=f"**{warn_count}**", inline=False)
-            embed.add_field(name="📍 Kênh", value=message.channel.mention, inline=False)
+            embed = discord.Embed(
+                title="🚫 Vi phạm từ cấm", color=discord.Color.red()
+            )
+            embed.add_field(
+                name="👤 Người dùng",
+                value=f"{message.author.mention} (`{message.author.id}`)",
+                inline=False,
+            )
+            embed.add_field(
+                name="💬 Tin nhắn gốc", value=message.content, inline=False
+            )
+            embed.add_field(
+                name="⚠ Số lần vi phạm", value=f"**{warn_count}**", inline=False
+            )
+            embed.add_field(
+                name="📍 Kênh", value=message.channel.mention, inline=False
+            )
             await log_channel.send(embed=embed)
 
-        # Xử lý hình phạt theo số lần vi phạm
+        # Áp dụng hình phạt
         if warn_count == 1:
-            warning = await message.channel.send(f"{message.author.mention} ⚠ Cảnh báo: Vui lòng không sử dụng từ ngữ thô tục!")
-            await warning.delete(delay=5)
+            warning = await message.channel.send(
+                f"{message.author.mention} ⚠ Cảnh báo: Vui lòng không sử dụng từ ngữ thô tục!"
+            )
+            try:
+                await warning.delete(delay=5)
+            except:
+                pass
 
         elif warn_count == 2:
             try:
-                await message.author.timeout(timedelta(minutes=10), reason="Chửi thề lần 2")
-                await message.channel.send(f"{message.author.mention} ⏳ Bạn đã bị Timeout **10 phút** vì tiếp tục vi phạm!")
+                await message.author.timeout(
+                    timedelta(minutes=10), reason="Chửi thề lần 2"
+                )
+                await message.channel.send(
+                    f"{message.author.mention} ⏳ Bạn đã bị Timeout **10 phút** vì tiếp tục vi phạm!"
+                )
+            except discord.Forbidden:
+                print(
+                    "❌ Không thể timeout: Bot dưới quyền user này hoặc thiếu quyền Moderate Members."
+                )
             except Exception as e:
-                print(f"❌ | Không thể timeout: {e}")
+                print(f"❌ Lỗi timeout: {e}")
 
         elif warn_count >= 3:
             try:
                 await message.author.kick(reason="Vi phạm từ cấm quá 3 lần")
-                await message.channel.send(f"👢 **{message.author}** đã bị Kick khỏi server vì cố tình vi phạm nhiều lần!")
+                await message.channel.send(
+                    f"👢 **{message.author}** đã bị Kick khỏi server vì cố tình vi phạm nhiều lần!"
+                )
+            except discord.Forbidden:
+                print(
+                    "❌ Không thể kick: Bot dưới quyền user này hoặc thiếu quyền Kick Members."
+                )
             except Exception as e:
-                print(f"❌ | Không thể kick: {e}")
-        return
+                print(f"❌ Lỗi kick: {e}")
 
-    # Xử lý các lệnh prefix (!) nếu không vi phạm từ cấm
-    await bot.process_commands(message)
+        return  # Ngắt hàm tại đây, KHÔNG xử lý lệnh hay chào hỏi với tin nhắn vi phạm.
+
+    # 5. Nếu tin nhắn HỢP LỆ (Không dính từ cấm) -> Xử lý lệnh và chào hỏi
     await handle_greetings(message)
+    await bot.process_commands(message)
     
 @bot.event
 async def on_command_error(ctx, error):
