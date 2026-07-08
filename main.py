@@ -11,6 +11,10 @@ import asyncio
 load_dotenv()
 token = os.getenv("TOKEN")
 
+warnings = {}
+bad_word_warnings = {}
+user_messages = {}
+
 prefix = "!t"
 intents = discord.Intents.all()
 intents.messages = True
@@ -24,21 +28,9 @@ YOUR_USER_ID = (1195361246195757118, 1335606447144173610)
 LOG_CHANNEL_ID = 1505527971883126844
 ALLOWED_GUILD_ID = 1505460695410671797
 
-warnings = {}
-user_messages = {}
-
 SPAM_MSG_LIMIT = 4
 SPAM_TIME_WINDOW = 3
 RESET_VIOLATION_HOURS = 1
-
-@bot.event
-async def on_ready():
-    print(f"==========================================")
-    print(f"🤖 Bot đã đăng nhập thành công: {bot.user}")
-    print(f"🛡️ Hệ thống bảo mật và chống spam đã kích hoạt!")
-    print(f"==========================================")
-    # Khởi động vòng lặp tự động quét dọn bộ đếm sau mỗi 1 giờ không tái phạm
-    auto_reset_warnings.start()
     
 @tasks.loop(minutes=1)
 async def auto_reset_warnings():
@@ -81,7 +73,15 @@ async def handle_greetings(message):
         )
         await message.channel.send(embed=embed)
 
-
+@bot.event
+async def on_ready():
+    print(f"==========================================")
+    print(f"🤖 Bot đã đăng nhập thành công: {bot.user}")
+    print(f"🛡️ Hệ thống bảo mật và chống spam đã kích hoạt!")
+    print(f"==========================================")
+    # Khởi động vòng lặp tự động quét dọn bộ đếm sau mỗi 1 giờ không tái phạm
+    auto_reset_warnings.start()
+    
 bad_words = [
     # Chửi phổ biến
     "địt",
