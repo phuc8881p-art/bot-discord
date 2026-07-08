@@ -4,6 +4,9 @@ import discord
 from deep_translator import GoogleTranslator
 from discord.ext import commands
 from dotenv import load_dotenv
+from datetime import timedelta
+import discord
+import re
 
 load_dotenv()
 token = os.getenv("TOKEN")
@@ -25,12 +28,7 @@ from datetime import timedelta
 import discord
 import re
 
-# Giả định các biến này đã được định nghĩa ở trên trong code của bạn
-# prefix = "!"
-# ALLOWED_GUILD_ID = 123456789
-# LOG_CHANNEL_ID = 123456789
-# warnings = {}
-
+warnings = {}
 
 async def handle_greetings(message):
     if message.content.lower() == "hello":
@@ -169,17 +167,17 @@ bad_words = [
 
 @bot.event
 async def on_message(message):
-    # 1. Bỏ qua bot và tin nhắn nhắn tin riêng (DM)
+    # 1. Bỏ qua nếu là bot hoặc tin nhắn DM
     if message.author.bot or not message.guild:
         return
 
-    # 2. Kiểm tra nếu không thuộc Server được cho phép cấu hình kiểm tra từ cấm
+    # 2. Kiểm tra nếu không thuộc Server được cấu hình kiểm tra từ cấm
     if message.guild.id != ALLOWED_GUILD_ID:
-        await handle_greetings(message)  # Vẫn hỗ trợ chào hỏi
-        await bot.process_commands(message)  # Xử lý lệnh bình thường
+        await handle_greetings(message)
+        await bot.process_commands(message)
         return
 
-    # 3. Bỏ qua Admin/Mod/Staff (Không check từ cấm, không cần chặn lệnh)
+    # 3. Bỏ qua Admin/Mod/Staff (Không lọc từ cấm)
     perms = message.author.guild_permissions
     ignore_roles = {"Staff", "Admin", "Mod"}
     has_ignore_role = any(role.name in ignore_roles for role in message.author.roles)
@@ -194,17 +192,18 @@ async def on_message(message):
         await bot.process_commands(message)
         return
 
-    # 4. CHECK BAD WORDS (Dành cho thành viên thường)
+    # 4. KIỂM TRA TỪ CẤM (Dành cho thành viên thường)
     msg = message.content.lower()
     is_bad = False
 
     for word in bad_words:
-        # Giải pháp thay thế \b bằng cách check khoảng trắng hoặc ranh giới tự tạo để nhận diện tốt tiếng Việt
+        # Regex tối ưu cho tiếng Việt (nhận diện khoảng trắng và dấu câu xung quanh)
         pattern = rf"(?:^|\s|[.,!?;*~])" + re.escape(word) + rf"(?:$|\s|[.,!?;*~])"
         if re.search(pattern, msg):
             is_bad = True
             break
 
+    # 5. XỬ LÝ KHI VI PHẠM TỪ CẤM
     if is_bad:
         # Xóa tin nhắn vi phạm
         try:
@@ -214,7 +213,7 @@ async def on_message(message):
         except discord.NotFound:
             pass
 
-        # Cộng dồn số lần vi phạm
+        # Cộng dồn cảnh báo (Đã có biến warnings chống lỗi crash)
         user_id = message.author.id
         warnings[user_id] = warnings.get(user_id, 0) + 1
         warn_count = warnings[user_id]
@@ -241,7 +240,7 @@ async def on_message(message):
             )
             await log_channel.send(embed=embed)
 
-        # Áp dụng hình phạt
+        # Thực thi hình phạt
         if warn_count == 1:
             warning = await message.channel.send(
                 f"{message.author.mention} ⚠ Cảnh báo: Vui lòng không sử dụng từ ngữ thô tục!"
@@ -260,9 +259,7 @@ async def on_message(message):
                     f"{message.author.mention} ⏳ Bạn đã bị Timeout **10 phút** vì tiếp tục vi phạm!"
                 )
             except discord.Forbidden:
-                print(
-                    "❌ Không thể timeout: Bot dưới quyền user này hoặc thiếu quyền Moderate Members."
-                )
+                print("❌ Bot thiếu quyền Moderate Members để timeout.")
             except Exception as e:
                 print(f"❌ Lỗi timeout: {e}")
 
@@ -273,15 +270,13 @@ async def on_message(message):
                     f"👢 **{message.author}** đã bị Kick khỏi server vì cố tình vi phạm nhiều lần!"
                 )
             except discord.Forbidden:
-                print(
-                    "❌ Không thể kick: Bot dưới quyền user này hoặc thiếu quyền Kick Members."
-                )
+                print("❌ Bot thiếu quyền Kick Members để đá người dùng.")
             except Exception as e:
                 print(f"❌ Lỗi kick: {e}")
 
-        return  # Ngắt hàm tại đây, KHÔNG xử lý lệnh hay chào hỏi với tin nhắn vi phạm.
+        return  # Ngắt hoàn toàn tại đây, không cho tin nhắn bậy bạ kích hoạt lệnh/lời chào nữa.
 
-    # 5. Nếu tin nhắn HỢP LỆ (Không dính từ cấm) -> Xử lý lệnh và chào hỏi
+    # 6. NẾU TIN NHẮN HỢP LỆ -> Mới xử lý lời chào và lệnh
     await handle_greetings(message)
     await bot.process_commands(message)
     
