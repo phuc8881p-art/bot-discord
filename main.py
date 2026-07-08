@@ -252,12 +252,12 @@ async def on_message(message):
         elif warn_count == 2:
             try:
                 await message.author.timeout(timedelta(minutes=10), reason="Spam tin nhắn lần 2")
-                await message.channel.send(f"{message.author.mention} ⏳ Bạn đã bị Timeout **10 phút**!")
+                await message.channel.send(f"{message.author.mention} ⏳ Bạn đã bị Timeout **10 phút** vì cố tình spam!")
             except Exception: pass
         elif warn_count >= 3:
             try:
                 await message.author.kick(reason="Spam quá 3 lần")
-                await message.channel.send(f"👢 **{message.author}** đã bị Kick khỏi server!")
+                await message.channel.send(f"👢 **{message.author}** đã bị Kick khỏi server vì cố tình vi phạm nhiều lần!")
             except Exception: pass
     
         return
