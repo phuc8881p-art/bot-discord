@@ -39,15 +39,176 @@ async def handle_greetings(message):
         )
         await message.channel.send(embed=embed)
 
+bad_words = [
+
+    # Chửi phổ biến
+    "địt", "dit", "djt", "đjt",
+    "đụ", "du", "đụ má", "du ma",
+    "đéo", "deo", "đếch", "dech",
+    "dm", "dmm", "đm", "dmk", "dmn",
+    "vcl", "vl", "vkl", "vloz",
+    "vãi", "vai", "vãi l", "vailon",
+
+    # Bộ phận cơ thể
+    "cặc", "cak", "cac",
+    "cu", "chim", "buồi", "buoi",
+    "lồn", "lon", "cl", "cailon",
+    "dái", "zái",
+    "cứt", "cut",
+    "đái", "ỉa",
+
+    # Xúc phạm
+    "ngu",
+    "ngu lol",
+    "ngu l",
+    "óc chó",
+    "oc cho",
+    "thiểu năng",
+    "súc vật",
+    "suc vat",
+    "chó chết",
+    "con chó",
+    "thằng chó",
+    "con điên",
+    "thằng điên",
+    "khốn nạn",
+    "óc l",
+    "óc c",
+    "rác rưởi",
+    "phế vật",
+    "vô dụng",
+
+    # Chửi gia đình
+    "mẹ mày",
+    "me may",
+    "bố mày",
+    "bo may",
+    "ông già mày",
+    "cả nhà mày",
+    "tổ sư",
+    "tiên sư",
+    "mả mẹ",
+    "con mẹ mày",
+
+    # Toxic game/chat
+    "trash",
+    "dog",
+    "ez",
+    "noob",
+    "gà",
+    "óc",
+    "brain dead",
+    "retard",
+
+    # Biến thể bypass
+    "d!t",
+    "d1t",
+    "djtme",
+    "d m",
+    "đ m",
+    "v l",
+    "c c",
+    "l o n",
+    "c a c",
+    "d e o",
+
+    # Tiếng Anh
+    "fuck",
+    "fck",
+    "shit",
+    "bitch",
+    "asshole",
+    "motherfucker",
+    "mf",
+    "bastard",
+    "dick",
+    "pussy",
+    "slut",
+    "whore",
+
+]
 @bot.event
 async def on_message(message):
-    if message.author == bot.user:
+    # Bỏ qua bot và DM
+    if message.author.bot or not message.guild:
         return
 
+    # Xử lý chào hỏi
     await handle_greetings(message)
 
-    await bot.process_commands(message)
+    # Nếu khác server cho phép thì vẫn xử lý command
+    if message.guild.id != ALLOWED_GUILD_ID:
+        await bot.process_commands(message)
+        return
 
+    # Bỏ qua admin/mod
+    perms = message.author.guild_permissions
+    if perms.administrator or perms.manage_messages or perms.manage_guild:
+        await bot.process_commands(message)
+        return
+
+    ignore_roles = {"Staff", "Admin", "Mod"}
+    if any(role.name in ignore_roles for role in message.author.roles):
+        await bot.process_commands(message)
+        return
+
+    msg = message.content.lower()
+
+    # CHECK BAD WORDS
+    is_bad = False
+
+    for word in bad_words:
+        pattern = r'\b' + re.escape(word) + r'\b'
+        if re.search(pattern, msg):
+            is_bad = True
+            break
+
+    if is_bad:
+        try:
+            await message.delete()
+        except discord.Forbidden:
+            print("Bot thiếu quyền xóa tin nhắn!")
+        except discord.NotFound:
+            pass
+
+        user_id = message.author.id
+        warnings[user_id] = warnings.get(user_id, 0) + 1
+        warn_count = warnings[user_id]
+
+        # Gửi LOG vào channel quản lý
+        log_channel = bot.get_channel(LOG_CHANNEL_ID)
+        if log_channel:
+            embed = discord.Embed(title="🚫 Vi phạm từ cấm", color=discord.Color.red())
+            embed.add_field(name="👤 Người dùng", value=f"{message.author.mention} (`{message.author.id}`)", inline=False)
+            embed.add_field(name="💬 Tin nhắn gốc", value=message.content, inline=False)
+            embed.add_field(name="⚠ Số lần vi phạm", value=f"**{warn_count}**", inline=False)
+            embed.add_field(name="📍 Kênh", value=message.channel.mention, inline=False)
+            await log_channel.send(embed=embed)
+
+        # Xử lý hình phạt theo số lần vi phạm
+        if warn_count == 1:
+            warning = await message.channel.send(f"{message.author.mention} ⚠ Cảnh báo: Vui lòng không sử dụng từ ngữ thô tục!")
+            await warning.delete(delay=5)
+
+        elif warn_count == 2:
+            try:
+                await message.author.timeout(timedelta(minutes=10), reason="Chửi thề lần 2")
+                await message.channel.send(f"{message.author.mention} ⏳ Bạn đã bị Timeout **10 phút** vì tiếp tục vi phạm!")
+            except Exception as e:
+                print(f"❌ | Không thể timeout: {e}")
+
+        elif warn_count >= 3:
+            try:
+                await message.author.kick(reason="Vi phạm từ cấm quá 3 lần")
+                await message.channel.send(f"👢 **{message.author}** đã bị Kick khỏi server vì cố tình vi phạm nhiều lần!")
+            except Exception as e:
+                print(f"❌ | Không thể kick: {e}")
+        return
+
+    # Xử lý các lệnh prefix (!) nếu không vi phạm từ cấm
+    await bot.process_commands(message)
+    await handle_greetings(message)
+    
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
