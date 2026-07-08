@@ -219,6 +219,7 @@ async def on_message(message):
         except discord.NotFound:
             pass
 
+        # Chỉ phạt và ghi log đúng thời điểm đạt ngưỡng (tránh spam log liên tục)
         if len(user_messages[user_id]) == SPAM_MSG_LIMIT:
             warnings[user_id] = warnings.get(user_id, 0) + 1
             warn_count = warnings[user_id]
@@ -235,7 +236,7 @@ async def on_message(message):
                 )
                 embed.add_field(
                     name="💬 Nội dung tin nhắn spam",
-                    value=message.content,
+                    value=message.content if message.content else "Tin nhắn trống / Embed / File",
                     inline=False,
                 )
                 embed.add_field(
@@ -250,7 +251,7 @@ async def on_message(message):
 
             # Hình phạt spam 
             if warn_count == 1:
-                warning = await message.channel.send(
+                await message.channel.send(
                     f"{message.author.mention} ⚠ Cảnh báo: Vui lòng dừng hành vi spam tin nhắn!"
                 )
             elif warn_count == 2:
@@ -281,6 +282,7 @@ async def on_message(message):
     is_bad = False
 
     for word in bad_words:
+        # Sử dụng Regex kiểm tra ranh giới từ (word boundaries) kết hợp ký tự đặc biệt
         pattern = rf"(?:^|\s|[.,!?;*~])" + re.escape(word) + rf"(?:$|\s|[.,!?;*~])"
         if re.search(pattern, msg):
             is_bad = True
@@ -289,7 +291,7 @@ async def on_message(message):
     # Xử lý khi dính từ cấm
     if is_bad:
         try:
-            await message.delete()  # ✅ ĐÃ THÊM LẠI: Xóa tin nhắn gõ tục ngay lập tức
+            await message.delete()  # ✅ Xóa tin nhắn gõ tục ngay lập tức
         except discord.Forbidden:
             print("❌ Bot thiếu quyền xóa tin nhắn (Manage Messages)!")
         except discord.NotFound:
@@ -321,7 +323,7 @@ async def on_message(message):
 
         # Hình phạt từ cấm
         if warn_count == 1:
-            # ✅ GIỮ NGUYÊN: Chỉ gửi tin nhắn cảnh báo và ĐỂ LẠI VĨNH VIỄN (đã xóa block tự hủy sau 5s)
+            # ✅ Chỉ gửi tin nhắn cảnh báo vĩnh viễn (đã bỏ block tự hủy)
             await message.channel.send(
                 f"{message.author.mention} ⚠ Cảnh báo: Vui lòng không sử dụng từ ngữ thô tục!"
             )
