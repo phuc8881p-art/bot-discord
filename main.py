@@ -18,7 +18,8 @@ bot = commands.Bot(command_prefix=prefix, intents=intents)
 bot.remove_command("help")
 
 YOUR_USER_ID = (1195361246195757118, 1335606447144173610)
-
+LOG_CHANNEL_ID = 1505527971883126844
+ALLOWED_GUILD_ID = 1505460695410671797
 
 async def handle_greetings(message):
     if message.content.lower() == "hello":
