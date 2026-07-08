@@ -4,7 +4,7 @@ import discord
 from deep_translator import GoogleTranslator
 from discord.ext import commands
 from dotenv import load_dotenv
-from datetime import timedelta
+from datetime import datetime, timedelta
 import discord
 import re
 
