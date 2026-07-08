@@ -192,8 +192,8 @@ async def on_message(message):
         await bot.process_commands(message)
         return
 
-# ==========================================
-    # 4. BỘ LỌC 1: KIỂM TRA SPAM TIN NHẮN (XÓA TIN NHẮN + SỬA LỖI ĐƠN)
+    # ==========================================
+    # 4. BỘ LỌC 1: KIỂM TRA SPAM TIN NHẮN (XÓA SẠCH TIN SPAM TRƯỚC ĐÓ)
     # ==========================================
     user_id = message.author.id
     current_time = datetime.now()
@@ -212,17 +212,24 @@ async def on_message(message):
 
     # Xử lý khi dính ngưỡng Spam
     if len(user_messages[user_id]) >= SPAM_MSG_LIMIT:
+        
+        # 🌟 HÀM QUÉT SẠCH: Xóa tin hiện tại và các tin nhắn spam trước đó của user này
         try:
-            await message.delete()  # ✅ Xóa tin nhắn spam
-        except discord.Forbidden:
-            print("❌ Bot thiếu quyền xóa tin nhắn (Manage Messages)!")
-        except discord.NotFound:
-            pass
+            # Hàm check này đảm bảo bot chỉ xóa tin nhắn của ĐÚNG người đang spam
+            def is_spam_author(m):
+                return m.author.id == user_id
 
-        # SỬA LỖI: Reset lại danh sách đếm sau khi bắt quả tang để lần sau đếm lại từ đầu, không bị kẹt > 5
+            # Quét và xóa tối đa 10 tin nhắn gần nhất của user này trong kênh chat
+            await message.channel.purge(limit=10, check=is_spam_author)
+        except discord.Forbidden:
+            print("❌ Bot thiếu quyền xóa tin nhắn (Manage Messages hoặc Read Message History)!")
+        except Exception as e:
+            print(f"❌ Lỗi khi dọn dẹp tin nhắn spam: {e}")
+
+        # Reset bộ đếm để không bị kẹt logic
         user_messages[user_id] = [] 
 
-        # Tiến hành phạt
+        # Tiến hành phạt và ghi log
         warnings[user_id] = warnings.get(user_id, 0) + 1
         warn_count = warnings[user_id]
 
@@ -254,7 +261,7 @@ async def on_message(message):
         # Hình phạt spam 
         if warn_count == 1:
             await message.channel.send(
-                f"{message.author.mention} ⚠ Cảnh báo: Vui lòng dừng hành vi spam tin nhắn!"
+                f"{message.author.mention} ⚠ Cảnh báo: Vui lòng dừng hành vi spam tin nhắn! (Tin nhắn spam đã bị xóa)"
             )
         elif warn_count == 2:
             try:
