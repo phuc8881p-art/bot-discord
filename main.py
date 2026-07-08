@@ -248,15 +248,11 @@ async def on_message(message):
                 )
                 await log_channel.send(embed=embed)
 
-            # Hình phạt spam (Tin nhắn cảnh báo spam vẫn tự xóa sau 5 giây để tránh rác kênh)
+            # Hình phạt spam 
             if warn_count == 1:
                 warning = await message.channel.send(
                     f"{message.author.mention} ⚠ Cảnh báo: Vui lòng dừng hành vi spam tin nhắn!"
                 )
-                try:
-                    await warning.delete(delay=5)
-                except:
-                    pass
             elif warn_count == 2:
                 try:
                     await message.author.timeout(
